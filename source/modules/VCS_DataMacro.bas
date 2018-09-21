@@ -1,35 +1,46 @@
 Attribute VB_Name = "VCS_DataMacro"
 Option Compare Database
+
+Option Private Module
 Option Explicit
 
 
-Public Sub ExportDataMacros(TableName As String, directory As String)
-    On Error GoTo Err_export:
+' For Access 2007 (VBA6) and earlier
+#If Not VBA7 Then
+  Private Const acTableDataMacro As Integer = 12
+#End If
 
-    Dim filePath As String: filePath = directory & TableName & ".xml"
+Public Sub ExportDataMacros(ByVal Tablename As String, ByVal directory As String)
+    On Error GoTo Err_export
+    Dim filePath As String
+    
+    filePath = directory & Tablename & ".xml"
 
-    VCS_IE_Functions.ExportObject acTableDataMacro, TableName, filePath, VCS_File.UsingUcs2
+    VCS_IE_Functions.ExportObject acTableDataMacro, Tablename, filePath, VCS_File.UsingUcs2
     FormatDataMacro filePath
 
     Exit Sub
 
 Err_export:
-    
-    
+    ' Error to export dataMacro, no contains dataMacro. Do nothing
 End Sub
 
-Public Sub ImportDataMacros(TableName As String, directory As String)
-    On Error GoTo Err_import:
-    Dim filePath As String: filePath = directory & TableName & ".xml"
-    VCS_IE_Functions.ImportObject acTableDataMacro, TableName, filePath, VCS_File.UsingUcs2
-
-Err_import:
+Public Sub ImportDataMacros(ByVal Tablename As String, ByVal directory As String)
+    On Error GoTo Err_import
+    Dim filePath As String
     
+    filePath = directory & Tablename & ".xml"
+    VCS_IE_Functions.ImportObject acTableDataMacro, Tablename, filePath, VCS_File.UsingUcs2
+    
+    Exit Sub
+    
+Err_import:
+    ' Error to import dataMacro. Do nothing
 End Sub
 
 'Splits exported DataMacro XML onto multiple lines
 'Allows git to find changes within lines using diff
-Private Sub FormatDataMacro(filePath As String)
+Private Sub FormatDataMacro(ByVal filePath As String)
 
     Dim saveStream As Object 'ADODB.Stream
 
@@ -53,7 +64,7 @@ Private Sub FormatDataMacro(filePath As String)
         Dim tag As Variant
         
         For Each tag In Split(strData, ">")
-            If tag <> "" Then
+            If tag <> vbNullString Then
                 saveStream.WriteText tag & ">", 1 'adWriteLine
             End If
         Next
